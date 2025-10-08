@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Resource, StudySession } from '../types';
-import { getLearningResources } from '../services/geminiService';
 import Button from './shared/Button';
 import Card from './shared/Card';
 import Spinner from './shared/Spinner';
@@ -73,10 +72,16 @@ const PlayIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
 interface LearningHubProps {
   activeSession: StudySession | null;
   startSession: (topic: string) => void;
-  stopSession: (finalDurationSeconds: number) => void;
+  stopSession: () => void;
   addResourceToSession: (resource: Resource) => void;
   initialTopic?: string | null;
   onTopicConsumed: () => void;
+  duration: number;
+  isPaused: boolean;
+  setIsPaused: (paused: boolean) => void;
+  suggestedResources: Resource[];
+  isLoadingResources: boolean;
+  resourcesError: string | null;
 }
 
 const formatDuration = (seconds: number) => {
@@ -86,13 +91,21 @@ const formatDuration = (seconds: number) => {
     return `${h}:${m}:${s}`;
 };
 
-const LearningHub: React.FC<LearningHubProps> = ({ activeSession, startSession, stopSession, addResourceToSession, initialTopic, onTopicConsumed }) => {
+const LearningHub: React.FC<LearningHubProps> = ({ 
+    activeSession, 
+    startSession, 
+    stopSession, 
+    addResourceToSession, 
+    initialTopic, 
+    onTopicConsumed,
+    duration,
+    isPaused,
+    setIsPaused,
+    suggestedResources,
+    isLoadingResources,
+    resourcesError
+}) => {
   const [topic, setTopic] = useState('');
-  const [resources, setResources] = useState<Resource[]>([]);
-  const [isLoadingResources, setIsLoadingResources] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [duration, setDuration] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
   const { speak, cancel, isSpeaking } = useTextToSpeech();
   const [speakingUri, setSpeakingUri] = useState<string | null>(null);
 
@@ -102,48 +115,11 @@ const LearningHub: React.FC<LearningHubProps> = ({ activeSession, startSession, 
       onTopicConsumed();
     }
   }, [initialTopic, onTopicConsumed]);
-
-  useEffect(() => {
-    if (activeSession) {
-      setTopic(activeSession.topic);
-      setDuration(0);
-      setIsPaused(false);
-      if (resources.length === 0) {
-          handleFindResources(activeSession.topic);
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeSession]);
-
-  useEffect(() => {
-    let timer: number;
-    if (activeSession && !isPaused) {
-      timer = window.setInterval(() => {
-        setDuration(prev => prev + 1);
-      }, 1000);
-    }
-    return () => window.clearInterval(timer);
-  }, [activeSession, isPaused]);
   
   const handleStartSession = () => {
     if (!topic) return;
     startSession(topic);
   }
-
-  const handleFindResources = async (currentTopic: string) => {
-    if (!currentTopic) return;
-    setIsLoadingResources(true);
-    setError(null);
-    setResources([]);
-    try {
-      const foundResources = await getLearningResources(currentTopic);
-      setResources(foundResources);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
-    } finally {
-      setIsLoadingResources(false);
-    }
-  };
 
   const handleSpeak = (resource: Resource) => {
     const currentlySpeaking = isSpeaking && speakingUri === resource.uri;
@@ -184,20 +160,20 @@ const LearningHub: React.FC<LearningHubProps> = ({ activeSession, startSession, 
                          </Button>
                     </div>
                 </div>
-                <Button onClick={() => stopSession(duration)} variant="secondary" className="w-full">
+                <Button onClick={stopSession} variant="secondary" className="w-full">
                     Finalizar Sessão e Fazer o Quiz
                 </Button>
             </Card>
 
-            {error && <Card className="bg-red-500/20 text-red-300">{error}</Card>}
+            {resourcesError && <Card className="bg-red-500/20 text-red-300">{resourcesError}</Card>}
 
             {isLoadingResources && <div className="flex flex-col items-center justify-center p-8"><Spinner /><p className="mt-2 text-gray-400">Buscando os melhores recursos...</p></div>}
             
-            {resources.length > 0 && (
+            {suggestedResources.length > 0 && (
                 <Card>
                     <h3 className="text-xl font-semibold mb-4 text-white">Recursos Sugeridos para "{activeSession.topic}"</h3>
                     <ul className="space-y-4">
-                    {resources.map((resource) => {
+                    {suggestedResources.map((resource) => {
                         const isSaved = isResourceSavedInSession(resource.uri);
                         const isThisSpeaking = speakingUri === resource.uri;
                         return (

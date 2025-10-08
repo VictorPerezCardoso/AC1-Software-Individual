@@ -7,7 +7,7 @@ import Quiz from './components/Quiz';
 import Dashboard from './components/Dashboard';
 import Auth from './components/Auth';
 import { AppView, Resource, StudySession, QuizQuestion, User } from './types';
-import { generateQuiz } from './services/geminiService';
+import { generateQuiz, getLearningResources } from './services/geminiService';
 import Spinner from './components/shared/Spinner';
 
 function App() {
@@ -16,8 +16,15 @@ function App() {
 
   const [currentView, setCurrentView] = useState<AppView>(AppView.DASHBOARD);
   const [studyHistory, setStudyHistory] = useState<StudySession[]>([]);
-  const [activeSession, setActiveSession] = useState<StudySession | null>(null);
   
+  // Active Session State - Lifted from LearningHub to App
+  const [activeSession, setActiveSession] = useState<StudySession | null>(null);
+  const [sessionDuration, setSessionDuration] = useState(0);
+  const [isSessionPaused, setIsSessionPaused] = useState(false);
+  const [suggestedResources, setSuggestedResources] = useState<Resource[]>([]);
+  const [isLoadingSuggestedResources, setIsLoadingSuggestedResources] = useState(false);
+  const [suggestedResourcesError, setSuggestedResourcesError] = useState<string | null>(null);
+
   const [sessionForQuiz, setSessionForQuiz] = useState<StudySession | null>(null);
   const [quizQuestions, setQuizQuestions] = useState<QuizQuestion[] | null>(null);
   const [savedQuizState, setSavedQuizState] = useState<{ currentQuestionIndex: number; answers: (string | null)[] } | null>(null);
@@ -100,6 +107,17 @@ function App() {
     }
   }, [studyHistory, currentUser]);
 
+  // Effect for the session timer
+  useEffect(() => {
+    let timer: number;
+    if (activeSession && !isSessionPaused) {
+      timer = window.setInterval(() => {
+        setSessionDuration(prev => prev + 1);
+      }, 1000);
+    }
+    return () => window.clearInterval(timer);
+  }, [activeSession, isSessionPaused]);
+
   const handleLogin = (id: string, passwordAttempt: string): boolean => {
     const user = users.find(u => u.id === id);
     if (user && user.password === passwordAttempt) {
@@ -140,6 +158,20 @@ function App() {
     }
   };
 
+  const findResourcesForSession = async (topic: string) => {
+    setIsLoadingSuggestedResources(true);
+    setSuggestedResourcesError(null);
+    setSuggestedResources([]);
+    try {
+        const foundResources = await getLearningResources(topic);
+        setSuggestedResources(foundResources);
+    } catch (err) {
+        setSuggestedResourcesError(err instanceof Error ? err.message : 'Ocorreu um erro desconhecido.');
+    } finally {
+        setIsLoadingSuggestedResources(false);
+    }
+  };
+
   const startSession = (topic: string) => {
     const newSession: StudySession = {
       id: `session-${Date.now()}`,
@@ -150,14 +182,22 @@ function App() {
       resources: [],
     };
     setActiveSession(newSession);
+    
+    // Reset session-related state
+    setSessionDuration(0);
+    setIsSessionPaused(false);
+
+    // Fetch resources for the new session
+    findResourcesForSession(topic);
+    
     setCurrentView(AppView.LEARNING);
   };
   
-  const stopSession = async (finalDurationSeconds: number) => {
+  const stopSession = async () => {
     if (!activeSession) return;
     
     const endTime = new Date();
-    const durationMinutes = Math.round(finalDurationSeconds / 60);
+    const durationMinutes = Math.round(sessionDuration / 60);
     const finishedSession = { ...activeSession, endTime, durationMinutes };
     
     // Lógica de dificuldade: se o usuário já estudou este tópico e salvou recursos nesta sessão, o quiz será difícil.
@@ -168,6 +208,13 @@ function App() {
     setSavedQuizState(null);
     setSessionForQuiz(finishedSession);
     setQuizDifficulty(difficulty);
+    
+    // Reset timer/resource states
+    setSessionDuration(0);
+    setIsSessionPaused(false);
+    setSuggestedResources([]);
+    setSuggestedResourcesError(null);
+
     setIsLoadingQuiz(true);
     
     try {
@@ -248,6 +295,12 @@ function App() {
             addResourceToSession={addResourceToSession}
             initialTopic={topicToContinue}
             onTopicConsumed={() => setTopicToContinue(null)}
+            duration={sessionDuration}
+            isPaused={isSessionPaused}
+            setIsPaused={setIsSessionPaused}
+            suggestedResources={suggestedResources}
+            isLoadingResources={isLoadingSuggestedResources}
+            resourcesError={suggestedResourcesError}
         />;
       case AppView.HISTORY:
         return <StudyHistory 
