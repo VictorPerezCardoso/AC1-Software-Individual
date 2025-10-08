@@ -12,8 +12,8 @@ export const getLearningResources = async (topic: string): Promise<Resource[]> =
     try {
         const response = await ai.models.generateContent({
             model: "gemini-2.5-flash",
-            // A nova instrução pede apenas as descrições, pois os títulos e URIs virão dos metadados de busca.
-            contents: `Com base nos resultados da busca sobre o tópico "${topic}", gere uma descrição curta e informativa para cada um dos 5 principais resultados encontrados. A descrição deve ter no máximo 2 frases. Formate sua resposta EXCLUSIVAMENTE como um array JSON de strings, onde cada string é uma descrição. NÃO inclua nenhum texto ou formatação markdown antes ou depois do array JSON. Exemplo de saída: ["Descrição do primeiro link.", "Descrição do segundo link.", "Descrição do terceiro link."].`,
+            // A nova instrução pede um objeto JSON para maior robustez na análise.
+            contents: `Com base nos resultados da busca sobre o tópico "${topic}", gere uma descrição curta e informativa para cada um dos 5 principais resultados encontrados. A descrição deve ter no máximo 2 frases. Formate sua resposta EXCLUSIVAMENTE como um objeto JSON com uma única chave "descriptions", que contém um array de strings. Cada string no array deve ser uma descrição. NÃO inclua nenhum texto ou formatação markdown antes ou depois do objeto JSON. Exemplo de saída: {"descriptions": ["Descrição do primeiro link.", "Descrição do segundo link."]}.`,
             config: {
                 tools: [{ googleSearch: {} }],
             }
@@ -32,20 +32,26 @@ export const getLearningResources = async (topic: string): Promise<Resource[]> =
         // Etapa 2: Obter as descrições geradas pela IA a partir do texto da resposta.
         const rawText = response.text.trim();
         
-        const jsonStartIndex = rawText.indexOf('[');
-        const jsonEndIndex = rawText.lastIndexOf(']');
+        // Lógica de extração de JSON aprimorada para ser mais resiliente
+        let jsonString = rawText;
+        const jsonStartIndex = jsonString.indexOf('{');
+        const jsonEndIndex = jsonString.lastIndexOf('}');
 
         if (jsonStartIndex === -1 || jsonEndIndex === -1 || jsonEndIndex < jsonStartIndex) {
-            console.error("Could not find a valid JSON array of descriptions in the response:", rawText);
-            throw new Error("A resposta da IA não continha um array JSON de descrições válido.");
+            console.error("Could not find a valid JSON object in the response:", rawText);
+            throw new Error("A resposta da IA não continha um objeto JSON de descrições válido.");
         }
 
-        const jsonString = rawText.substring(jsonStartIndex, jsonEndIndex + 1);
-        const descriptions = JSON.parse(jsonString);
-
-        if (!Array.isArray(descriptions) || descriptions.some(d => typeof d !== 'string')) {
-             throw new Error("A IA não retornou um array de strings para as descrições.");
+        jsonString = jsonString.substring(jsonStartIndex, jsonEndIndex + 1);
+        
+        const parsedJson = JSON.parse(jsonString);
+        
+        if (!parsedJson.descriptions || !Array.isArray(parsedJson.descriptions) || parsedJson.descriptions.some(d => typeof d !== 'string')) {
+             throw new Error("A IA não retornou um objeto com a chave 'descriptions' contendo um array de strings.");
         }
+
+        const descriptions: string[] = parsedJson.descriptions;
+
 
         // Etapa 3: Combinar os resultados da busca com as descrições geradas.
         const resources: Resource[] = [];

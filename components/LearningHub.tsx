@@ -203,21 +203,24 @@ const LearningHub: React.FC<LearningHubProps> = ({ activeSession, startSession, 
                         return (
                             <li key={resource.uri} className={`bg-gray-800/50 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 transition-all duration-300 ${isSaved ? 'ring-2 ring-indigo-500/80' : 'ring-0 ring-transparent'}`}>
                                 <div className="flex-grow">
-                                    <a href={resource.uri} target="_blank" rel="noopener noreferrer" className="font-semibold text-indigo-400 hover:underline" title={resource.title}>
+                                    <h4 className="font-semibold text-indigo-400" title={resource.title}>
                                         {resource.title}
-                                    </a>
+                                    </h4>
                                     <p className="text-gray-300 mt-1 text-sm">
                                         {resource.description}
                                     </p>
                                 </div>
-                                <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0">
+                                <div className="flex items-center gap-2 w-full sm:w-auto mt-2 sm:mt-0 flex-shrink-0">
+                                    <a href={resource.uri} target="_blank" rel="noopener noreferrer" className="bg-gray-700 hover:bg-gray-600 text-white font-semibold text-sm px-4 py-1.5 rounded-lg transition-all duration-300">
+                                        Abrir
+                                    </a>
                                      <button onClick={() => handleSpeak(resource)} title="Ler em voz alta" className="p-2 rounded-full hover:bg-white/10 text-indigo-400 hover:text-indigo-300 transition-colors">
                                         {isThisSpeaking ? <StopIcon /> : <SpeakerIcon />}
                                     </button>
                                     <Button
                                         onClick={() => addResourceToSession(resource)}
                                         disabled={isSaved}
-                                        className={`text-sm px-4 py-1.5 flex-grow whitespace-nowrap ${isSaved ? 'bg-green-600 hover:bg-green-600 cursor-default' : ''}`}
+                                        className={`text-sm px-4 py-1.5 whitespace-nowrap ${isSaved ? 'bg-green-600 hover:bg-green-600 cursor-default' : ''}`}
                                     >
                                         {isSaved ? 'Salvo' : 'Salvar na Sessão'}
                                     </Button>

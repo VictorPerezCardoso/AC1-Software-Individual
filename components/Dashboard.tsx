@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo } from 'react';
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, Text } from 'recharts';
 import { StudySession } from '../types';
 import Card from './shared/Card';
 import Button from './shared/Button';
@@ -13,6 +13,18 @@ interface DashboardProps {
 }
 
 const COLORS = ['#818cf8', '#a78bfa', '#34d399', '#f59e0b', '#ec4899', '#60a5fa', '#f87171'];
+
+const renderCustomBarLabel = (props: any) => {
+    const { x, y, width, value } = props;
+    if (value > 0) {
+        return (
+            <Text x={x + width / 2} y={y} fill="#e5e7eb" textAnchor="middle" dy={-6} fontSize={12}>
+                {value}
+            </Text>
+        );
+    }
+    return null;
+};
 
 const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, userName }) => {
   const [timeFilter, setTimeFilter] = useState('all'); // '7days', '30days', 'all'
@@ -32,15 +44,12 @@ const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, u
 
   const pieChartData = useMemo(() => {
     const topicTotals = filteredSessions
-      .filter(session => session.durationMinutes > 0)
       .reduce((acc, session) => {
-        // Normaliza o tópico para agrupar "React" e "react" juntos.
         const normalizedTopic = session.topic.trim().toLowerCase();
         acc[normalizedTopic] = (acc[normalizedTopic] || 0) + session.durationMinutes;
         return acc;
       }, {} as Record<string, number>);
 
-    // Mantém a capitalização original para exibição.
     const topicDisplayNames = filteredSessions.reduce((acc, session) => {
         const normalizedTopic = session.topic.trim().toLowerCase();
         if (!acc[normalizedTopic]) {
@@ -52,18 +61,15 @@ const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, u
     return Object.entries(topicTotals)
       .map(([normalizedTopic, duration]) => ({ 
           topic: topicDisplayNames[normalizedTopic] || normalizedTopic, 
-          duration 
+          displayDuration: duration === 0 ? 0.1 : duration,
+          actualDuration: duration
       }))
-      .sort((a, b) => b.duration - a.duration);
+      .sort((a, b) => b.displayDuration - a.displayDuration);
   }, [filteredSessions]);
 
   const { barChartData, topicsWithQuizzes } = useMemo(() => {
     const sessionsWithQuiz = filteredSessions
       .filter(s => s.quizResult && s.quizResult.totalQuestions > 0)
-      // FIX: The `startTime` property is already a Date object due to hydration in App.tsx.
-      // Removing the redundant `new Date()` wrapper can resolve potential type inference issues
-      // and simplifies the code. The error about arithmetic operations on non-numbers often
-      // points to TypeScript being unable to correctly resolve the type after an operation.
       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
 
     const topicsWithQuizzes = [...new Set(sessionsWithQuiz.map(s => s.topic))];
@@ -133,7 +139,7 @@ const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, u
                     outerRadius={140}
                     paddingAngle={5}
                     fill="#8884d8"
-                    dataKey="duration"
+                    dataKey="displayDuration"
                     nameKey="topic"
                   >
                     {pieChartData.map((entry, index) => (
@@ -142,7 +148,10 @@ const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, u
                   </Pie>
                   <Tooltip 
                       contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '0.5rem' }} 
-                      formatter={(value: number, name: string) => [`${value} minutos`, name]}
+                      formatter={(value: number, name: string, props: any) => {
+                          const { payload } = props;
+                          return [`${payload.actualDuration} minutos`, name];
+                      }}
                   />
                   <Legend formatter={(value) => <span className="text-gray-300">{value}</span>} />
                 </PieChart>
@@ -161,7 +170,7 @@ const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, u
           {barChartData.length > 0 ? (
             <div className="w-full h-[320px] sm:h-[400px]">
                 <ResponsiveContainer>
-                    <BarChart data={barChartData} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
+                    <BarChart data={barChartData} margin={{ top: 20, right: 20, left: -10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#4b5563" />
                         <XAxis dataKey="date" stroke="#9ca3af" />
                         <YAxis stroke="#9ca3af" label={{ value: 'Acertos', angle: -90, position: 'insideLeft', fill: '#9ca3af' }}/>
@@ -172,7 +181,7 @@ const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, u
                         />
                         <Legend formatter={(value) => <span className="text-gray-300">{value}</span>} />
                         {topicsWithQuizzes.map((topic, index) => (
-                            <Bar key={topic} dataKey={topic} fill={COLORS[index % COLORS.length]} />
+                            <Bar key={topic} dataKey={topic} fill={COLORS[index % COLORS.length]} label={renderCustomBarLabel} />
                         ))}
                     </BarChart>
                 </ResponsiveContainer>
