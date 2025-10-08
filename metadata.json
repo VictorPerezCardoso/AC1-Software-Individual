@@ -1,0 +1,5 @@
+{
+  "name": "COTES Controle de Tempo e Estudo - AI",
+  "description": "Um aplicativo focado em estudos que atua como um assistente de aprendizado inteligente, utilizando IA para encontrar recursos, gerar quizzes e otimizar o processo de estudo.",
+  "requestFramePermissions": []
+}
