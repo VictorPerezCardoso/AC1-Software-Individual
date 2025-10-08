@@ -1,9 +1,9 @@
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Resource, StudySession } from '../types';
-import Button from './shared/Button';
-import Card from './shared/Card';
-import Spinner from './shared/Spinner';
+import { Resource, StudySession } from '../types.ts';
+import Button from './shared/Button.tsx';
+import Card from './shared/Card.tsx';
+import Spinner from './shared/Spinner.tsx';
 
 // Hook para Text-to-Speech
 const useTextToSpeech = () => {

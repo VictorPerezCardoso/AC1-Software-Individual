@@ -1,6 +1,6 @@
 import React from 'react';
-import { AppView, User } from '../types';
-import Button from './shared/Button';
+import { AppView, User } from '../types.ts';
+import Button from './shared/Button.tsx';
 
 interface HeaderProps {
   currentView: AppView;

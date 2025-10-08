@@ -1,6 +1,6 @@
 import React from 'react';
-import Button from './Button';
-import Card from './Card';
+import Button from './Button.tsx';
+import Card from './Card.tsx';
 
 interface ConfirmationModalProps {
   isOpen: boolean;

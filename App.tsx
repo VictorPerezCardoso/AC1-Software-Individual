@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
-import Header from './components/Header';
-import LearningHub from './components/LearningHub';
-import StudyHistory from './components/KnowledgeBase';
-import Quiz from './components/Quiz';
-import Dashboard from './components/Dashboard';
-import Auth from './components/Auth';
-import { AppView, Resource, StudySession, QuizQuestion, User } from './types';
-import { generateQuiz, getLearningResources } from './services/geminiService';
-import Spinner from './components/shared/Spinner';
+import Header from './components/Header.tsx';
+import LearningHub from './components/LearningHub.tsx';
+import StudyHistory from './components/KnowledgeBase.tsx';
+import Quiz from './components/Quiz.tsx';
+import Dashboard from './components/Dashboard.tsx';
+import Auth from './components/Auth.tsx';
+import { AppView, Resource, StudySession, QuizQuestion, User } from './types.ts';
+import { generateQuiz, getLearningResources } from './services/geminiService.ts';
+import Spinner from './components/shared/Spinner.tsx';
 
 function App() {
   const [users, setUsers] = useState<User[]>([]);

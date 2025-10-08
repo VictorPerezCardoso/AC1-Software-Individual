@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { QuizQuestion } from '../types';
-import Button from './shared/Button';
-import Card from './shared/Card';
-import Confetti from './shared/Confetti';
+import { QuizQuestion } from '../types.ts';
+import Button from './shared/Button.tsx';
+import Card from './shared/Card.tsx';
+import Confetti from './shared/Confetti.tsx';
 
 // Hook para Text-to-Speech
 const useTextToSpeech = () => {

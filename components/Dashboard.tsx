@@ -1,10 +1,10 @@
 
 import React, { useState, useMemo } from 'react';
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, Text } from 'recharts';
-import { StudySession } from '../types';
-import Card from './shared/Card';
-import Button from './shared/Button';
-import ConfirmationModal from './shared/ConfirmationModal';
+import { StudySession } from '../types.ts';
+import Card from './shared/Card.tsx';
+import Button from './shared/Button.tsx';
+import ConfirmationModal from './shared/ConfirmationModal.tsx';
 
 interface DashboardProps {
   studyHistory: StudySession[];

@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { StudySession } from '../types';
-import Card from './shared/Card';
-import Button from './shared/Button';
-import ConfirmationModal from './shared/ConfirmationModal';
-import ScheduleModal from './shared/ScheduleModal';
+import { StudySession } from '../types.ts';
+import Card from './shared/Card.tsx';
+import Button from './shared/Button.tsx';
+import ConfirmationModal from './shared/ConfirmationModal.tsx';
+import ScheduleModal from './shared/ScheduleModal.tsx';
 
 interface StudyHistoryProps {
   studyHistory: StudySession[];

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { User } from '../types';
-import Card from './shared/Card';
-import Button from './shared/Button';
+import { User } from '../types.ts';
+import Card from './shared/Card.tsx';
+import Button from './shared/Button.tsx';
 
 // Helper para formatar nomes de usuário longos para exibição.
 const formatUserName = (name: string, maxLength: number = 12): string => {

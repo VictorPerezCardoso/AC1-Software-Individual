@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import Button from './Button';
-import Card from './Card';
-import { StudySession } from '../../types';
+import Button from './Button.tsx';
+import Card from './Card.tsx';
+import { StudySession } from '../../types.ts';
 
 interface ScheduleModalProps {
   isOpen: boolean;
