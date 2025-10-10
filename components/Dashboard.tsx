@@ -148,6 +148,7 @@ const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, u
                   </Pie>
                   <Tooltip 
                       contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '0.5rem' }} 
+                      itemStyle={{ color: '#e5e7eb' }}
                       formatter={(value: number, name: string, props: any) => {
                           const { payload } = props;
                           return [`${payload.actualDuration} minutos`, name];
@@ -176,6 +177,7 @@ const Dashboard: React.FC<DashboardProps> = ({ studyHistory, deleteAllHistory, u
                         <YAxis stroke="#9ca3af" label={{ value: 'Acertos', angle: -90, position: 'insideLeft', fill: '#9ca3af' }}/>
                         <Tooltip 
                             contentStyle={{ backgroundColor: '#1f2937', border: '1px solid #4b5563', borderRadius: '0.5rem' }} 
+                            itemStyle={{ color: '#e5e7eb' }}
                             formatter={(value: number, name: string) => [`${value} acertos`, name]}
                             labelStyle={{ color: '#d1d5db' }}
                         />
